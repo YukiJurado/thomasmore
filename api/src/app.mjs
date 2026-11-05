@@ -4,6 +4,7 @@
 // It works, and tests/integration proves it. It is also hard to read, hard to test and
 // hard to change safely. Part 1 of the assignment: find out why, then split it into layers.
 
+import { env } from './config/env.mjs';
 import { defineEvent } from './models/event.mjs';
 import { defineRegistration } from './models/registration.mjs';
 import express from 'express';
@@ -11,17 +12,9 @@ import { Sequelize } from 'sequelize';
 import { createLogger, format, transports } from 'winston';
 import { z } from 'zod';
 
-if (process.env.NODE_ENV !== 'test') {
-  try {
-    process.loadEnvFile();
-  } catch {
-    // no .env
-  }
-}
-
 const logger = createLogger({
-  level: process.env.LOG_LEVEL || 'info',
-  silent: process.env.NODE_ENV === 'test',
+  level: env.logLevel,
+  silent: env.nodeEnv === 'test',
   format: format.combine(format.timestamp(), format.json()),
   transports: [new transports.Console()]
 });
@@ -30,7 +23,7 @@ const logger = createLogger({
 
 export const sequelize = new Sequelize({
   dialect: 'sqlite',
-  storage: process.env.DB_STORAGE || './data/events.sqlite',
+  storage: env.dbStorage,
   logging: false
 });
 
