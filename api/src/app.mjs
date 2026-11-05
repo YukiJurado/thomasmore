@@ -4,6 +4,7 @@
 // It works, and tests/integration proves it. It is also hard to read, hard to test and
 // hard to change safely. Part 1 of the assignment: find out why, then split it into layers.
 
+import { defineEvent } from './models/event.mjs';
 import express from 'express';
 import { DataTypes, Sequelize } from 'sequelize';
 import { createLogger, format, transports } from 'winston';
@@ -32,13 +33,7 @@ export const sequelize = new Sequelize({
   logging: false
 });
 
-export const Event = sequelize.define('Event', {
-  title: { type: DataTypes.STRING(120), allowNull: false },
-  description: { type: DataTypes.TEXT, allowNull: true },
-  location: { type: DataTypes.STRING(120), allowNull: false },
-  startsAt: { type: DataTypes.DATE, allowNull: false },
-  capacity: { type: DataTypes.INTEGER, allowNull: false, validate: { min: 1 } }
-});
+export const Event = defineEvent(sequelize);
 
 export const Registration = sequelize.define('Registration', {
   name: { type: DataTypes.STRING(100), allowNull: false },
