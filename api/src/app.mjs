@@ -4,7 +4,7 @@
 // It works, and tests/integration proves it. It is also hard to read, hard to test and
 // hard to change safely. Part 1 of the assignment: find out why, then split it into layers.
 
-import { getEvents } from './controllers/eventController.mjs';
+import { eventRoutes } from './routes/eventRoutes.mjs';
 import { env } from './config/env.mjs';
 import express from 'express';
 import { createLogger, format, transports } from 'winston';
@@ -69,7 +69,7 @@ app.get('/api/health', async (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
-app.get('/api/events', getEvents);
+app.use('/api/events', eventRoutes);
 
 app.get('/api/events/:id', async (req, res) => {
   const p = idSchema.safeParse(req.params);
