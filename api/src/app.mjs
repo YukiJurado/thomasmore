@@ -5,8 +5,9 @@
 // hard to change safely. Part 1 of the assignment: find out why, then split it into layers.
 
 import { defineEvent } from './models/event.mjs';
+import { defineRegistration } from './models/registration.mjs';
 import express from 'express';
-import { DataTypes, Sequelize } from 'sequelize';
+import { Sequelize } from 'sequelize';
 import { createLogger, format, transports } from 'winston';
 import { z } from 'zod';
 
@@ -35,10 +36,7 @@ export const sequelize = new Sequelize({
 
 export const Event = defineEvent(sequelize);
 
-export const Registration = sequelize.define('Registration', {
-  name: { type: DataTypes.STRING(100), allowNull: false },
-  email: { type: DataTypes.STRING(254), allowNull: false }
-});
+export const Registration = defineRegistration(sequelize);
 
 Event.hasMany(Registration, { foreignKey: { name: 'eventId', allowNull: false }, onDelete: 'CASCADE' });
 Registration.belongsTo(Event, { foreignKey: 'eventId' });
