@@ -5,12 +5,12 @@
 // hard to change safely. Part 1 of the assignment: find out why, then split it into layers.
 
 import { env } from './config/env.mjs';
-import { defineEvent } from './models/event.mjs';
-import { defineRegistration } from './models/registration.mjs';
 import express from 'express';
-import { Sequelize } from 'sequelize';
 import { createLogger, format, transports } from 'winston';
 import { z } from 'zod';
+import { sequelize, Event, Registration } from './db/index.mjs';
+
+export { sequelize, Event, Registration };
 
 const logger = createLogger({
   level: env.logLevel,
@@ -19,20 +19,7 @@ const logger = createLogger({
   transports: [new transports.Console()]
 });
 
-// ---------------------------------------------------------------- database
-
-export const sequelize = new Sequelize({
-  dialect: 'sqlite',
-  storage: env.dbStorage,
-  logging: false
-});
-
-export const Event = defineEvent(sequelize);
-
-export const Registration = defineRegistration(sequelize);
-
-Event.hasMany(Registration, { foreignKey: { name: 'eventId', allowNull: false }, onDelete: 'CASCADE' });
-Registration.belongsTo(Event, { foreignKey: 'eventId' });
+// ---------------------------------------------------------------- database now in db/index.mjs
 
 // ---------------------------------------------------------------- validation
 
