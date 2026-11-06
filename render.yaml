@@ -1,0 +1,19 @@
+# Reference configuration for the existing free coursework demo.
+# A persistent disk requires a paid instance; do not enable one without reviewing its cost.
+services:
+  - type: web
+    name: thomasmore-api
+    runtime: node
+    plan: free
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm start -w api
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: 22
+      - key: CACHE_TTL_MS
+        value: 30000
+      - key: MAIL_RETRY_MS
+        value: 10000
