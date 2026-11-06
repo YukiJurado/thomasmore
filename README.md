@@ -1,97 +1,110 @@
-# Campus Events
+# Campus Events — Week 3 backend improvements
 
-Starter project for **Advanced Development** (Thomas More – International Experience Design, year 3).
+Students browse campus events and register for them. Based on the [course starter](https://github.com/JelleOosterboschThomasMore/campus-events).
 
-A small but complete web app: students browse campus events and register for them.
+- **Repository:** https://github.com/YukiJurado/thomasmore
+- **Online app:** https://thomasmore-api.onrender.com/
+- **Health:** https://thomasmore-api.onrender.com/api/health
+- **Study guide:** [docs/study-guide.md](docs/study-guide.md)
+- **Submission and sources:** [docs/submission.md](docs/submission.md)
 
-- **api/** : REST API: Node.js, Express 5, Sequelize + SQLite, Zod
-- **web/** : frontend: Vue 3, Vue Router, Vite
+## Run locally
 
-It works out of the box, and it has tests. It is also the kind of code you will meet in your first job:
-the whole API is one long file. Your job is to **clean it up, ship it to production, fix it and add the hard
-parts**
-
-## Quick start
-
-You need **Node.js 22.12 or newer** (`node -v`) and Git.
+Use Node.js 22.12 or newer. From the repository root:
 
 ```bash
-git clone <your-fork-url>
-cd campus-events
-npm install        # installs api + web in one go
-npm run dev        # starts both
+npm ci
+npm run dev
 ```
 
-Open **http://localhost:5173**. The API runs on http://localhost:3000/api.
-The first start fills the database with demo events. `npm run seed` resets it.
+Frontend: http://localhost:5173. API: http://localhost:3000/api.
 
-Later parts need a few services. You never need them to run the tests.
+To run the production layout locally:
 
-| Service | Local | Setting in `api/.env` |
-|---|---|---|
-| RabbitMQ | `docker compose up -d rabbitmq` | `AMQP_URL` |
-| Redis | `docker compose up -d redis` | `REDIS_URL` |
-| Identity provider | a free Auth0 tenant | `AUTH_ISSUER`, `AUTH_AUDIENCE`, `AUTH_CLIENT_ID` |
-
-## Scripts (run from the root folder)
-
-| Script | What it does |
-|---|---|
-| `npm run dev` | API + frontend with auto-reload |
-| `npm test` | All tests: API (node:test + supertest) and frontend (Vitest) |
-| `npm run lint` | ESLint for the whole project |
-| `npm run check` | Lint + tests. **The pipeline runs exactly this. It must be green before you hand in.** |
-| `npm run seed` | Reset the database to the demo data |
-| `npm run build` | Production build of the frontend |
-
-## How it fits together
-
-```
-browser ──► web (Vite, :5173) ──/api/*──► api (Express, :3000) ──► SQLite (api/data/events.sqlite)
+```bash
+npm run build
+npm start -w api
 ```
 
-In development Vite forwards every `/api/...` request to the API (see `web/vite.config.js`),
-so the browser only talks to one address and you don't need CORS.
+The API serves the built Vue app at http://localhost:3000/ and handles deep links such as `/events/1`.
 
-### api/
-
-**Today** the whole API lives in one file:
-
-```
-api/src/app.mjs      settings, database + models, validation, routes, business rules, error handling
-api/src/server.mjs   starts the app (and adds demo data to an empty database)
-api/src/seed.mjs     npm run seed: reset the database
+```bash
+npm run check  # ESLint, API tests, frontend tests
+npm run build # production frontend build
 ```
 
-Prefered:
+`npm run seed` explicitly resets the local database. Do not use it against data you need to keep.
 
+## Backend structure
+
+```text
+api/src/
+  app.mjs           assembles the Express application
+  server.mjs        database startup, HTTP listener, email worker, shutdown
+  config/           environment settings and logger
+  routes/           URLs, HTTP methods, validation and controller wiring
+  validation/       Zod schemas
+  middleware/       validation, request logs, errors and frontend serving
+  controllers/      HTTP request/response handling
+  services/         business rules and operation coordination
+  repositories/     database access and transaction boundary
+  models/           Sequelize table definitions
+  db/               connection and model relationships
+  mail/             SMTP / HTTPS provider adapter
+  cache/            bounded response cache
 ```
-routes/        URL + validation → controller        (no logic)
-controllers/   HTTP in/out, picks the status code    (thin)
-services/      business rules, throws AppErrors      (no Express, no SQL)
-repositories/  data access via Sequelize             (no rules)
-models/ db/    tables, connection, demo data
-config/        the only place that reads process.env
-```
 
-The integration tests in `api/tests/integration` only talk HTTP. They pass before your refactoring,
-and they must still pass after it, without changing them.
+Services do not import Express or Sequelize. Only repositories query models. Model creation and relationships stay in `db/`. Only `config/env.mjs` reads environment variables.
 
-| Method | URL | |
-|---|---|---|
-| GET | `/api/health` | Health check |
-| GET / POST | `/api/events` | List / create |
-| GET / PATCH / DELETE | `/api/events/:id` | One event (incl. `registered`, `spotsLeft`) |
-| GET / POST | `/api/events/:id/registrations` | List / register `{ name, email }` |
-| GET | `/api/stats` | Occupancy per event |
+## Reliable confirmation emails
 
-Errors always have this shape: `{ "error": { "code", "message", "details?" } }`.
+Registration checks the event, duplicate email and remaining capacity. A transaction inserts **both the registration and an email job**. The endpoint returns `201` after committing, without waiting for an external email provider.
 
-### web/
+The worker sends pending jobs in the background. On failure the registration remains saved, and the job is retried with exponential backoff, capped at one hour. A newly started worker loads pending jobs from the database. Failed provider calls never become successful deliveries in the queue.
 
-```
-api/          client.js (fetch + ApiError) and events.js (one function per endpoint)
-views/        one component per page, registered in router.js
-components/   reusable pieces: EventCard, SeatMeter, RegistrationForm, ErrorMessage
-styles.css    design tokens at the top, change those first
-```
+Copy `api/.env.example` to `api/.env` locally, or configure variables directly in the hosting dashboard. Set `MAIL_FROM` and one of:
+
+- `RESEND_API_KEY`: HTTPS delivery through Resend; appropriate for free Render instances that block SMTP ports.
+- `SMTP_URL`: delivery through a real SMTP provider or a local test SMTP server.
+
+A verified sender/domain and permitted recipient are required by your provider. Resend's `onboarding@resend.dev` test sender is restricted to the account owner's email. Tests use a local SMTP receiver and require no provider account or credentials.
+
+An outbox job has a stable UUID. Resend receives it as an idempotency key; SMTP receives a stable Message-ID. Delivery is **at least once**, not a promise of exactly-once inbox receipt: a crash after provider acceptance but before marking the job sent can cause a retry. Resend's idempotency window is limited; SMTP Message-ID alone does not guarantee deduplication.
+
+## Correct GET caching
+
+Event lists, details, registration lists and statistics use a server-side Map with a 30-second default TTL and a maximum of 500 entries. `X-Cache: MISS` / `HIT` makes behaviour observable. Health checks always query the database and bypass the cache.
+
+Every successful POST, PATCH, PUT or DELETE clears all entries. Clearing everything is deliberately simple: registrations affect counts, remaining seats and statistics across several URLs. Failed writes do not invalidate valid cached data. A generation counter prevents a read started before a change from later refilling the cache with stale data.
+
+Statistics expire no later than the next event start, because time alone can change their status. API responses use `Cache-Control: no-store` so browser caches do not retain registration data; the application's internal Map can still cache responses.
+
+The cache and database-operation queue are designed for **one application process**. Multiple instances would require shared cache invalidation and a database concurrency design suitable for that deployment.
+
+## Deployment
+
+The existing Render web service uses branch `main` and an empty Root Directory:
+
+| Setting | Value |
+| --- | --- |
+| Build Command | `npm ci --include=dev && npm run build` |
+| Start Command | `npm start -w api` |
+| Health Check Path | `/api/health` |
+
+`render.yaml` documents the same configuration. No new project dependencies were added.
+
+**Storage limitation:** the free Render filesystem is ephemeral. Local SQLite and its pending emails can be lost on restart, redeploy or idle spin-down. The free URL is a coursework demo, not durable production storage. For durable hosting, use a paid persistent disk and an absolute `DB_STORAGE` such as `/var/data/campus/events.sqlite`, or migrate to a managed database. No paid plan is provisioned by this repository.
+
+Free Render also sleeps when idle; the first request can take about a minute. The email worker runs only while the service is awake. Pending jobs resume when it wakes if their database is on durable storage.
+
+## API
+
+| Method | URL | Purpose |
+| --- | --- | --- |
+| GET | `/api/health` | Fresh database health check |
+| GET / POST | `/api/events` | List / create events |
+| GET / PATCH / DELETE | `/api/events/:id` | Read / update / delete an event |
+| GET / POST | `/api/events/:id/registrations` | List registrations / register |
+| GET | `/api/stats` | Occupancy and status |
+
+Errors retain `{ "error": { "code", "message", "details?" } }`. The starter has no authentication or administrative access control; do not use this demo for sensitive participant data.
