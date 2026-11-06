@@ -32,7 +32,7 @@ A refactor reorganizes code while preserving behavior. New features and bug fixe
 
 `process.env` is read only in this configuration module. An environment variable is a setting supplied by the operating system or host, not a hard-coded secret in source control.
 
-`db/index.mjs` creates the SQLite connection, defines models, and connects their relationships. `Event.hasMany(Registration)` means one event can own multiple registrations. `Registration.belongsTo(Event)` provides the foreign key to its event. `onDelete: 'CASCADE'` removes dependent records when their parent is deleted. Pending confirmation jobs depend on their registration too.
+`db/index.mjs` creates the configured SQLite or PostgreSQL connection, defines models, and connects their relationships. `Event.hasMany(Registration)` means one event can own multiple registrations. `Registration.belongsTo(Event)` provides the foreign key to its event. `onDelete: 'CASCADE'` removes dependent records when their parent is deleted. Pending confirmation jobs depend on their registration too.
 
 `server.mjs` syncs tables, seeds an empty database, starts the mail worker and listens on the configured port. Binding to `0.0.0.0` lets the host route incoming traffic to the process. Shutdown stops accepting requests and closes worker/database resources.
 
@@ -68,7 +68,7 @@ Statistics use the registration count to calculate an occupancy percentage and c
 
 `options = {}` supplies a default empty options object. Passing `{ transaction }` makes several repository calls participate in the same database transaction. The service does not construct SQL or import Sequelize.
 
-`withDatabase` serializes complete database operations in this single-process SQLite application. Its promise chain runs the next operation after the previous operation settles. Catching rejection on the queue allows future operations to continue after one fails; the original failing promise is still returned to its caller.
+`withDatabase` serializes complete database operations in this single-process application. Its promise chain runs the next operation after the previous operation settles. Catching rejection on the queue allows future operations to continue after one fails; the original failing promise is still returned to its caller.
 
 `withTransaction` uses Sequelize's managed transaction: return normally to commit, throw to roll back. Public reads also pass through the operation queue, so they cannot observe/cache an incomplete registration transaction.
 
@@ -100,7 +100,7 @@ Each EmailJob stores recipient, subject, text, attempts, next-attempt time, deli
 
 `createMailWorker` has a `drain` method for one batch and `start` for periodic background processing. A shared `running` promise prevents overlapping batches in this one worker. The interval is unreferenced so it does not keep a shutting-down process alive by itself.
 
-Retry delay doubles after each failure and is capped at one hour. Failed jobs remain in SQLite, and a new worker can find them after restart. Deleting an event cascades through registrations to pending email jobs.
+Retry delay doubles after each failure and is capped at one hour. Failed jobs remain in the database, and a new worker can find them after restart. Deleting an event cascades through registrations to pending email jobs.
 
 `mail/sender.mjs` supports Nodemailer SMTP and Resend HTTPS. SMTP connection, greeting and socket timeouts are passed as transport options and are configurable with `SMTP_TIMEOUT_MS` (default 5000 ms). A silent SMTP-server regression test verifies that a connection does not wait indefinitely. Resend uses an API key in its authorization header; it is never committed or printed. A provider error rejects the send promise, so the worker records a retry.
 
@@ -149,7 +149,7 @@ The original HTTP integration tests remain unchanged. New feature tests check th
 
 `npm run check` runs lint and all tests. `npm run build` compiles the Vue app. Render builds from the repository root and runs the API workspace; Express serves both the API and compiled Vue assets from the same origin, so no production CORS configuration is necessary.
 
-Free Render storage is temporary. The restart test proves persistence when the database file remains; it does not overcome the host deleting that file. A persistent disk or managed database is needed to make hosted registrations durable across redeploys.
+Free Render storage is temporary, so the live app uses external Neon PostgreSQL. `DATABASE_URL` selects PostgreSQL; local tests default to SQLite. `REQUIRE_DURABLE_STORAGE=true` prevents a missing hosted connection from silently creating a temporary database. TLS verifies the server certificate. A transaction locks the event row before checking capacity on PostgreSQL. See `docs/postgresql.md` for the one-time import and its boundaries.
 
 ## Questions to rehearse
 
@@ -162,6 +162,6 @@ Free Render storage is temporary. The restart test proves persistence when the d
 7. Why is TTL insufficient alone? Responses could remain stale immediately after a successful write.
 8. Why does health bypass cache? It must prove the database is reachable now.
 9. Is exactly-once email delivery guaranteed? No; explain the provider-acceptance/crash window.
-10. Is the free deployment durable? No; explain ephemeral storage and the persistent-storage remedy.
+10. Where is hosted data stored? External Neon PostgreSQL, independently of Render’s temporary filesystem. Explain the private connection URL, TLS, and startup guard.
 
 The demo seed inserts events and registrations in one transaction and uses the IDs returned by the inserts. It does not assume that IDs restart at 1 after every event is deleted.

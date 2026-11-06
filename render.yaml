@@ -1,5 +1,4 @@
-# Reference configuration for the existing free coursework demo.
-# A persistent disk requires a paid instance; do not enable one without reviewing its cost.
+# Free web hosting with an external PostgreSQL database configured privately.
 services:
   - type: web
     name: thomasmore-api
@@ -17,3 +16,7 @@ services:
         value: 30000
       - key: MAIL_RETRY_MS
         value: 10000
+      - key: REQUIRE_DURABLE_STORAGE
+        value: true
+      - key: DATABASE_URL
+        sync: false

@@ -4,7 +4,7 @@ Checked on 6 November 2026. No existing integration tests were edited.
 
 ## Automated checks
 
-- `npm run check`: ESLint passes with no warnings; 42 API tests and 10 frontend tests pass.
+- `npm run check`: ESLint passes with no warnings; 49 API tests and 10 frontend tests pass.
 - `npm run build`: Vue production build succeeds.
 - Local SMTP transport, unavailable provider, retry backoff, transaction rollback and actual process-restart persistence are covered by feature tests.
 - Cache feature tests cover successful writes, failed writes, errors, TTL, memory bound, statistics time boundaries and stale in-flight reads.
@@ -46,6 +46,8 @@ The Resend test sender is restricted to the account owner's address. Arbitrary r
 
 GitHub CI passed lint, tests and the production build at the earlier verified checkpoint: https://github.com/YukiJurado/thomasmore/actions/runs/42298723521
 
-Free Render's temporary filesystem is not durable production storage. The restart test uses a retained SQLite file; it does not claim that Render retains discarded files. A persistent disk or managed database is needed for that guarantee.
+The live application now reads an external Neon PostgreSQL database. Four existing events and three registrations were imported without resending historical email. A separate real PostgreSQL check committed a registration and pending email, closed the process, and verified both from a fresh process. Disposable verification records were removed. Local automated restart tests continue to use retained SQLite files.
 
 Final audit additionally covers an SMTP server that accepts a connection but never greets, and seeding an empty database after its ID counter has advanced. Both regressions were reproduced before correction.
+
+PostgreSQL implementation CI passed lint, all 59 tests, and the production build: https://github.com/YukiJurado/thomasmore/actions/runs/42305048089

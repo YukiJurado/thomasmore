@@ -67,6 +67,8 @@ Copy `api/.env.example` to `api/.env` locally, or configure variables directly i
 - `RESEND_API_KEY`: HTTPS delivery through Resend; appropriate for free Render instances that block SMTP ports.
 - `SMTP_URL`: delivery through a real SMTP provider or a local test SMTP server.
 
+Set `MAIL_PROVIDER=smtp` or `MAIL_PROVIDER=resend` to select explicitly when both credentials are present.
+
 A verified sender/domain and permitted recipient are required by your provider. Resend's `onboarding@resend.dev` test sender is restricted to the account owner's email. Tests use a local SMTP receiver and require no provider account or credentials.
 
 An outbox job has a stable UUID. Resend receives it as an idempotency key; SMTP receives a stable Message-ID. Delivery is **at least once**, not a promise of exactly-once inbox receipt: a crash after provider acceptance but before marking the job sent can cause a retry. Resend's idempotency window is limited; SMTP Message-ID alone does not guarantee deduplication.
@@ -91,11 +93,11 @@ The existing Render web service uses branch `main` and an empty Root Directory:
 | Start Command | `npm start -w api` |
 | Health Check Path | `/api/health` |
 
-`render.yaml` documents the same configuration. No new project dependencies were added.
+`render.yaml` documents the same configuration. The approved PostgreSQL drivers are `pg` and `pg-hstore`.
 
-**Storage limitation:** the free Render filesystem is ephemeral. Local SQLite and its pending emails can be lost on restart, redeploy or idle spin-down. The free URL is a coursework demo, not durable production storage. For durable hosting, use a paid persistent disk and an absolute `DB_STORAGE` such as `/var/data/campus/events.sqlite`, or migrate to a managed database. No paid plan is provisioned by this repository.
+**Durable storage:** the live app uses an external Neon PostgreSQL database through a private `DATABASE_URL`. `REQUIRE_DURABLE_STORAGE=true` prevents startup from falling back to temporary SQLite files. Local tests still use SQLite. See [PostgreSQL setup and data import](docs/postgresql.md). No paid plan is provisioned.
 
-Free Render also sleeps when idle; the first request can take about a minute. The email worker runs only while the service is awake. Pending jobs resume when it wakes if their database is on durable storage.
+Free Render also sleeps when idle; the first request can take about a minute. The email worker runs only while the service is awake. Pending jobs resume when it wakes from the external database.
 
 ## API
 
