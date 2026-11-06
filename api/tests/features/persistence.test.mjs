@@ -12,7 +12,7 @@ it('preserves registrations and pending email across a real application-process 
   try {
     const fixture = fileURLToPath(new URL('../fixtures/persistRegistration.mjs', import.meta.url));
     const options = { env: {
-      ...process.env, NODE_ENV: 'test', DB_STORAGE: join(directory, 'events.sqlite')
+      ...process.env, NODE_ENV: 'test', DATABASE_URL: '', REQUIRE_DURABLE_STORAGE: 'false', DB_STORAGE: join(directory, 'events.sqlite')
     } };
     const run = promisify(execFile);
     const first = await run(process.execPath, [fixture, 'write'], options);

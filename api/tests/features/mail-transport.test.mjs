@@ -9,10 +9,14 @@ const job = {
   subject: 'Registration confirmed: Backend Bootcamp', text: 'Hi Student, you are registered.'
 };
 
-it('delivers an actual SMTP message with the configured sender and confirmation contents', async () => {
+it('delivers SMTP with explicit provider selection even when an old HTTPS key remains configured', async (t) => {
+  t.mock.method(globalThis, 'fetch', async () => { throw new Error('SMTP mode must not use HTTPS'); });
   const smtp = await startSmtpCapture();
   try {
-    const send = createMailSender({ smtpUrl: smtp.smtpUrl, mailFrom: 'events@example.com' });
+    const send = createMailSender({
+      mailProvider: 'smtp', resendApiKey: 'unused-test-key',
+      smtpUrl: smtp.smtpUrl, mailFrom: 'events@example.com'
+    });
     const info = await send(job);
     assert.deepEqual(info.accepted, [job.recipient]);
     assert.equal(smtp.messages.length, 1);

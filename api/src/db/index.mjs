@@ -1,3 +1,4 @@
+import { databaseOptions } from '../config/database.mjs';
 import { mkdir } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { defineEmailJob } from '../models/emailJob.mjs';
@@ -6,15 +7,11 @@ import { env } from '../config/env.mjs';
 import { defineEvent } from '../models/event.mjs';
 import { defineRegistration } from '../models/registration.mjs';
 
-if (env.dbStorage !== ':memory:') {
+if (!env.databaseUrl && env.dbStorage !== ':memory:') {
   await mkdir(dirname(resolve(env.dbStorage)), { recursive: true });
 }
 
-export const sequelize = new Sequelize({
-  dialect: 'sqlite',
-  storage: env.dbStorage,
-  logging: false
-});
+export const sequelize = new Sequelize(databaseOptions(env));
 
 export const Event = defineEvent(sequelize);
 export const Registration = defineRegistration(sequelize);

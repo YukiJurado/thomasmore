@@ -1,4 +1,12 @@
-import { Event } from '../db/index.mjs';
+import { Event, sequelize } from '../db/index.mjs';
+
+// PostgreSQL row locks protect the last seat if another process also writes this event.
+function eventReadOptions(options) {
+  if (options.transaction && sequelize.getDialect() === 'postgres') {
+    return { ...options, lock: options.transaction.LOCK.UPDATE };
+  }
+  return options;
+}
 
 export async function findAllEvents() {
   const events = await Event.findAll({ order: [['startsAt', 'ASC']] });
@@ -6,7 +14,7 @@ export async function findAllEvents() {
 }
 
 export async function findEventById(id, options = {}) {
-  const event = await Event.findByPk(id, options);
+  const event = await Event.findByPk(id, eventReadOptions(options));
   return event ? event.toJSON() : null;
 }
 
@@ -16,7 +24,7 @@ export async function createEvent(data, options = {}) {
 }
 
 export async function updateEvent(id, data, options = {}) {
-  const event = await Event.findByPk(id, options);
+  const event = await Event.findByPk(id, eventReadOptions(options));
   if (!event) return null;
   await event.update(data, options);
   return event.toJSON();
