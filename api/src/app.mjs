@@ -4,6 +4,7 @@
 // It works, and tests/integration proves it. It is also hard to read, hard to test and
 // hard to change safely. Part 1 of the assignment: find out why, then split it into layers.
 
+import { AppError } from './errors/AppError.mjs';
 import { eventRoutes } from './routes/eventRoutes.mjs';
 import { env } from './config/env.mjs';
 import express from 'express';
@@ -70,27 +71,6 @@ app.get('/api/health', async (req, res) => {
 });
 
 app.use('/api/events', eventRoutes);
-
-app.get('/api/events/:id', async (req, res) => {
-  const p = idSchema.safeParse(req.params);
-  if (!p.success) {
-    return res.status(400).json({
-      error: {
-        code: 'VALIDATION_ERROR',
-        message: 'Request validation failed',
-        details: p.error.issues.map((i) => ({ field: i.path.join('.') || 'params', message: i.message }))
-      }
-    });
-  }
-
-  const ev = await Event.findByPk(p.data.id);
-  if (!ev) {
-    return res.status(404).json({ error: { code: 'NOT_FOUND', message: `Event with id ${p.data.id} not found` } });
-  }
-
-  const count = await Registration.count({ where: { eventId: ev.id } });
-  res.status(200).json({ ...ev.toJSON(), registered: count, spotsLeft: Math.max(ev.capacity - count, 0) });
-});
 
 app.post('/api/events', async (req, res) => {
   const result = createEventSchema.safeParse(req.body);
@@ -267,10 +247,30 @@ app.use((req, res) => {
 // Express recognises an error handler by its FOUR parameters.
 app.use((err, req, res, _next) => {
   if (err.type === 'entity.parse.failed') {
-    return res.status(400).json({ error: { code: 'INVALID_JSON', message: 'Request body is not valid JSON' } });
+    return res.status(400).json({
+      error: {
+        code: 'INVALID_JSON',
+        message: 'Request body is not valid JSON'
+      }
+    });
   }
+
+  if (err instanceof AppError) {
+    return res.status(err.status).json({
+      error: {
+        code: err.code,
+        message: err.message
+      }
+    });
+  }
+
   logger.error(err.message, { stack: err.stack });
-  res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Something went wrong' } });
+  res.status(500).json({
+    error: {
+      code: 'INTERNAL_ERROR',
+      message: 'Something went wrong'
+    }
+  });
 });
 
 // ---------------------------------------------------------------- demo data
