@@ -1,18 +1,20 @@
 import { Op } from 'sequelize';
 import { EmailJob } from '../db/index.mjs';
-import { withTransaction } from './databaseRepository.mjs';
+import { withDatabase, withTransaction } from './databaseRepository.mjs';
 
 export async function enqueueEmail(data, options = {}) {
   const job = await EmailJob.create(data, options);
   return job.toJSON();
 }
 
-export async function findDueEmails(now, limit = 20) {
-  const jobs = await EmailJob.findAll({
-    where: { sentAt: null, nextAttemptAt: { [Op.lte]: new Date(now) } },
-    order: [['id', 'ASC']], limit
+export function findDueEmails(now, limit = 20) {
+  return withDatabase(async () => {
+    const jobs = await EmailJob.findAll({
+      where: { sentAt: null, nextAttemptAt: { [Op.lte]: new Date(now) } },
+      order: [['id', 'ASC']], limit
+    });
+    return jobs.map((job) => job.toJSON());
   });
-  return jobs.map((job) => job.toJSON());
 }
 
 export function recordDelivery(id, sentAt) {

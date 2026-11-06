@@ -29,3 +29,8 @@ export function deleteEvent(id, options = {}) {
 export function countEvents() {
   return Event.count();
 }
+
+export async function findEventsForStats() {
+  const events = await Event.findAll();
+  return events.map((event) => event.toJSON());
+}

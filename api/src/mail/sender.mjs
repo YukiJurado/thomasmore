@@ -7,7 +7,7 @@ export function createMailSender(settings = env) {
     const message = {
       from: settings.mailFrom, to: job.recipient,
       subject: job.subject, text: job.text,
-      messageId: `<campus-registration-${job.registrationId}@campus-events.local>`
+      messageId: `<${job.deliveryKey}@campus-events.local>`
     };
     if (!message.from) throw new Error('MAIL_FROM is not configured');
     // HTTPS works on hosts that block outbound SMTP ports, including free Render services.
@@ -17,7 +17,7 @@ export function createMailSender(settings = env) {
         headers: {
           Authorization: `Bearer ${settings.resendApiKey}`,
           'Content-Type': 'application/json',
-          'Idempotency-Key': `campus-registration-${job.id}`
+          'Idempotency-Key': `campus-confirmation-${job.deliveryKey}`
         },
         body: JSON.stringify({
           from: message.from, to: [message.to], subject: message.subject, text: message.text

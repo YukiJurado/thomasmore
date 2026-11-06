@@ -2,6 +2,7 @@ import { DataTypes } from 'sequelize';
 
 export function defineEmailJob(sequelize) {
   return sequelize.define('EmailJob', {
+    deliveryKey: { type: DataTypes.UUID, allowNull: false, defaultValue: DataTypes.UUIDV4, unique: true },
     recipient: { type: DataTypes.STRING(254), allowNull: false },
     subject: { type: DataTypes.STRING, allowNull: false },
     text: { type: DataTypes.TEXT, allowNull: false },

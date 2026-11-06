@@ -1,12 +1,14 @@
 import * as registrations from '../repositories/registrationRepository.mjs';
 import { enqueueEmail } from '../repositories/emailRepository.mjs';
-import { withTransaction } from '../repositories/databaseRepository.mjs';
+import { withDatabase, withTransaction } from '../repositories/databaseRepository.mjs';
 import { requireEvent } from './eventService.mjs';
 import { AppError } from '../errors/AppError.mjs';
 
-export async function listRegistrations(eventId) {
-  await requireEvent(eventId);
-  return registrations.listRegistrations(eventId);
+export function listRegistrations(eventId) {
+  return withDatabase(async () => {
+    await requireEvent(eventId);
+    return registrations.listRegistrations(eventId);
+  });
 }
 
 export function register(eventId, data) {

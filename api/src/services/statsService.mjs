@@ -1,4 +1,5 @@
-import { findAllEvents } from '../repositories/eventRepository.mjs';
+import { withDatabase } from '../repositories/databaseRepository.mjs';
+import { findEventsForStats } from '../repositories/eventRepository.mjs';
 import { countRegistrationsForEvent } from '../repositories/registrationRepository.mjs';
 
 function eventStatus(event, registered, now) {
@@ -6,8 +7,8 @@ function eventStatus(event, registered, now) {
   return new Date(event.startsAt) < now ? 'past' : 'open';
 }
 
-export async function getStatsSnapshot() {
-  const events = await findAllEvents();
+async function readStatsSnapshot() {
+  const events = await findEventsForStats();
   const now = new Date();
   const value = await Promise.all(events.map(async (event) => {
     const registered = await countRegistrationsForEvent(event.id);
@@ -20,4 +21,8 @@ export async function getStatsSnapshot() {
   const futureStarts = events.map((event) => new Date(event.startsAt).getTime())
     .filter((time) => time >= now.getTime());
   return { value, validUntil: Math.min(...futureStarts) };
+}
+
+export function getStatsSnapshot() {
+  return withDatabase(readStatsSnapshot);
 }
