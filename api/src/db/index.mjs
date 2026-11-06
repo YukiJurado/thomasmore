@@ -1,3 +1,4 @@
+import { defineEmailJob } from '../models/emailJob.mjs';
 import { Sequelize } from 'sequelize';
 import { env } from '../config/env.mjs';
 import { defineEvent } from '../models/event.mjs';
@@ -18,3 +19,9 @@ Event.hasMany(Registration, {
 });
 
 Registration.belongsTo(Event, { foreignKey: 'eventId' });
+
+export const EmailJob = defineEmailJob(sequelize);
+Registration.hasMany(EmailJob, {
+  foreignKey: { name: 'registrationId', allowNull: false }, onDelete: 'CASCADE'
+});
+EmailJob.belongsTo(Registration, { foreignKey: 'registrationId' });

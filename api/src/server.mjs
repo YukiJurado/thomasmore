@@ -1,3 +1,4 @@
+import { createMailWorker } from './services/mailWorker.mjs';
 import { env } from './config/env.mjs';
 
 import { app, Event, seedDemoData, sequelize } from './app.mjs';
@@ -11,6 +12,8 @@ if ((await Event.count()) === 0) {
 }
 
 const port = env.port;
+const mailWorker = createMailWorker({ retryMs: env.mailRetryMs });
+mailWorker.start();
 app.listen(port, () => {
   console.log(`Campus Events API running on http://localhost:${port}/api`);
 });
