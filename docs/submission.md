@@ -40,7 +40,7 @@
 
 The new tests cover an unavailable mail provider, actual local SMTP messages, outbox rollback, a real process restart, concurrent registration attempts, cache invalidation, expiry, memory bounds and delayed reads. They do not require live mail credentials.
 
-Live frontend/API checks are recorded in [verification.md](verification.md). Provider inbox delivery requires the configured account's permitted recipient.
+Live frontend/API checks are recorded in [verification.md](verification.md). The live confirmation test was reported **Delivered** in Resend. The test sender is restricted to the configured account owner; arbitrary recipients require a verified domain.
 
 ## Hosting boundaries
 

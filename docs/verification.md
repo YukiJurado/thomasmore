@@ -40,6 +40,10 @@ The registered event reported one participant and zero remaining seats. A second
 
 ## Remaining external conditions
 
-Provider configuration and inbox receipt must be verified separately from the local SMTP and failure tests. A configured Resend test sender only accepts the account owner's address.
+A live registration confirmation was sent through the configured Resend HTTPS provider. The provider dashboard reported **Delivered** for subject `Registration confirmed: Week 3 email verification`. The temporary test event and registration were removed afterward. Private recipient details and the API key are not included in this repository.
+
+The Resend test sender is restricted to the account owner's address. Arbitrary recipients require a verified sending domain.
+
+GitHub CI also passed lint, all 50 tests and the production build: https://github.com/YukiJurado/thomasmore/actions/runs/42298723521
 
 Free Render's temporary filesystem is not durable production storage. The restart test uses a retained SQLite file; it does not claim that Render retains discarded files. A persistent disk or managed database is needed for that guarantee.
