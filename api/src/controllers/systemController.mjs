@@ -1,5 +1,5 @@
 import { checkDatabase } from '../repositories/databaseRepository.mjs';
-import { getStats as loadStats } from '../services/statsService.mjs';
+import { getStatsSnapshot } from '../services/statsService.mjs';
 
 export async function health(_req, res) {
   await checkDatabase();
@@ -7,5 +7,7 @@ export async function health(_req, res) {
 }
 
 export async function stats(_req, res) {
-  res.json(await loadStats());
+  const snapshot = await getStatsSnapshot();
+  res.locals.cacheExpiresAt = snapshot.validUntil;
+  res.json(snapshot.value);
 }

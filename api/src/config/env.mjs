@@ -14,5 +14,6 @@ export const env = {
   smtpUrl: process.env.SMTP_URL,
   resendApiKey: process.env.RESEND_API_KEY,
   mailFrom: process.env.MAIL_FROM,
-  mailRetryMs: Number(process.env.MAIL_RETRY_MS || 10000)
+  mailRetryMs: Number(process.env.MAIL_RETRY_MS || 10000),
+  cacheTtlMs: Number(process.env.CACHE_TTL_MS || 30000)
 };

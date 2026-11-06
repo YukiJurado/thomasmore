@@ -6,10 +6,10 @@ function eventStatus(event, registered, now) {
   return new Date(event.startsAt) < now ? 'past' : 'open';
 }
 
-export async function getStats() {
+export async function getStatsSnapshot() {
   const events = await findAllEvents();
   const now = new Date();
-  return Promise.all(events.map(async (event) => {
+  const value = await Promise.all(events.map(async (event) => {
     const registered = await countRegistrationsForEvent(event.id);
     return {
       id: event.id, title: event.title, registered, capacity: event.capacity,
@@ -17,4 +17,7 @@ export async function getStats() {
       status: eventStatus(event, registered, now)
     };
   }));
+  const futureStarts = events.map((event) => new Date(event.startsAt).getTime())
+    .filter((time) => time >= now.getTime());
+  return { value, validUntil: Math.min(...futureStarts) };
 }
