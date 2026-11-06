@@ -102,7 +102,7 @@ Each EmailJob stores recipient, subject, text, attempts, next-attempt time, deli
 
 Retry delay doubles after each failure and is capped at one hour. Failed jobs remain in SQLite, and a new worker can find them after restart. Deleting an event cascades through registrations to pending email jobs.
 
-`mail/sender.mjs` supports Nodemailer SMTP and Resend HTTPS. Timeouts bound an unavailable provider call. Resend uses an API key in its authorization header; it is never committed or printed. A provider error rejects the send promise, so the worker records a retry.
+`mail/sender.mjs` supports Nodemailer SMTP and Resend HTTPS. SMTP connection, greeting and socket timeouts are passed as transport options and are configurable with `SMTP_TIMEOUT_MS` (default 5000 ms). A silent SMTP-server regression test verifies that a connection does not wait indefinitely. Resend uses an API key in its authorization header; it is never committed or printed. A provider error rejects the send promise, so the worker records a retry.
 
 A stable UUID prevents different jobs from sharing an idempotency key after a database reset. Resend's key can suppress duplicate requests within its provider window. SMTP receives a stable Message-ID, but this is not a guarantee that a recipient will never receive duplicates. A crash after provider acceptance and before `sentAt` is saved is an unavoidable ambiguity without stronger provider guarantees.
 
@@ -163,3 +163,5 @@ Free Render storage is temporary. The restart test proves persistence when the d
 8. Why does health bypass cache? It must prove the database is reachable now.
 9. Is exactly-once email delivery guaranteed? No; explain the provider-acceptance/crash window.
 10. Is the free deployment durable? No; explain ephemeral storage and the persistent-storage remedy.
+
+The demo seed inserts events and registrations in one transaction and uses the IDs returned by the inserts. It does not assume that IDs restart at 1 after every event is deleted.

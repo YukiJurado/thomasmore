@@ -4,7 +4,7 @@ Checked on 6 November 2026. No existing integration tests were edited.
 
 ## Automated checks
 
-- `npm run check`: ESLint passes with no warnings; 40 API tests and 10 frontend tests pass.
+- `npm run check`: ESLint passes with no warnings; 42 API tests and 10 frontend tests pass.
 - `npm run build`: Vue production build succeeds.
 - Local SMTP transport, unavailable provider, retry backoff, transaction rollback and actual process-restart persistence are covered by feature tests.
 - Cache feature tests cover successful writes, failed writes, errors, TTL, memory bound, statistics time boundaries and stale in-flight reads.
@@ -44,6 +44,8 @@ A live registration confirmation was sent through the configured Resend HTTPS pr
 
 The Resend test sender is restricted to the account owner's address. Arbitrary recipients require a verified sending domain.
 
-GitHub CI also passed lint, all 50 tests and the production build: https://github.com/YukiJurado/thomasmore/actions/runs/42298723521
+GitHub CI passed lint, tests and the production build at the earlier verified checkpoint: https://github.com/YukiJurado/thomasmore/actions/runs/42298723521
 
 Free Render's temporary filesystem is not durable production storage. The restart test uses a retained SQLite file; it does not claim that Render retains discarded files. A persistent disk or managed database is needed for that guarantee.
+
+Final audit additionally covers an SMTP server that accepts a connection but never greets, and seeding an empty database after its ID counter has advanced. Both regressions were reproduced before correction.

@@ -20,6 +20,7 @@ export const env = {
   dbStorage: process.env.DB_STORAGE || './data/events.sqlite',
   port: positiveInteger('PORT', 3000),
   smtpUrl: process.env.SMTP_URL,
+  smtpTimeoutMs: positiveInteger('SMTP_TIMEOUT_MS', 5000),
   resendApiKey: process.env.RESEND_API_KEY,
   mailFrom: process.env.MAIL_FROM,
   mailRetryMs: positiveInteger('MAIL_RETRY_MS', 10000),

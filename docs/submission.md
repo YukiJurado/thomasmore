@@ -36,7 +36,7 @@
 
 ## Validation
 
-`npm run check` passes **40 API tests and 10 frontend tests**, with no lint warnings or errors. `npm run build` passes.
+`npm run check` passes **42 API tests and 10 frontend tests**, with no lint warnings or errors. `npm run build` passes.
 
 The new tests cover an unavailable mail provider, actual local SMTP messages, outbox rollback, a real process restart, concurrent registration attempts, cache invalidation, expiry, memory bounds and delayed reads. They do not require live mail credentials.
 
@@ -45,3 +45,5 @@ Live frontend/API checks are recorded in [verification.md](verification.md). The
 ## Hosting boundaries
 
 The free deployment uses ephemeral SQLite storage. Durable production storage requires an attached persistent disk or a managed database. The outbox survives normal application restarts when the database file is retained; it cannot recover a file discarded by a hosting platform. Multiple app instances would require a shared cache/invalidation strategy and a corresponding worker concurrency design.
+
+Final audit additionally covers an SMTP server that accepts a connection but never greets, and seeding an empty database after its ID counter has advanced. Both regressions were reproduced before correction.

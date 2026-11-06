@@ -1,6 +1,24 @@
 import nodemailer from 'nodemailer';
 import { env } from '../config/env.mjs';
 
+function createSmtpTransport(settings) {
+  const url = new URL(settings.smtpUrl);
+  if (!['smtp:', 'smtps:'].includes(url.protocol)) {
+    throw new Error('SMTP_URL must use smtp:// or smtps://');
+  }
+  const timeout = settings.smtpTimeoutMs ?? 5000;
+  // Transport options belong to createTransport's first argument; its second is message defaults.
+  return nodemailer.createTransport({
+    host: url.hostname,
+    port: Number(url.port || (url.protocol === 'smtps:' ? 465 : 587)),
+    secure: url.protocol === 'smtps:',
+    auth: url.username ? {
+      user: decodeURIComponent(url.username), pass: decodeURIComponent(url.password)
+    } : undefined,
+    connectionTimeout: timeout, greetingTimeout: timeout, socketTimeout: timeout
+  });
+}
+
 export function createMailSender(settings = env) {
   let transporter;
   return async (job) => {
@@ -28,9 +46,7 @@ export function createMailSender(settings = env) {
       return response.json();
     }
     if (!settings.smtpUrl) throw new Error('SMTP_URL or RESEND_API_KEY must be configured');
-    transporter ??= nodemailer.createTransport(settings.smtpUrl, {
-      connectionTimeout: 5000, greetingTimeout: 5000, socketTimeout: 10000
-    });
+    transporter ??= createSmtpTransport(settings);
     const info = await transporter.sendMail(message);
     if (!info.accepted?.length) throw new Error('Mail provider did not accept the recipient');
     return info;

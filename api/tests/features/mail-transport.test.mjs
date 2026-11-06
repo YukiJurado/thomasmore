@@ -1,3 +1,4 @@
+import net from 'node:net';
 import assert from 'node:assert/strict';
 import { it } from 'node:test';
 import { createMailSender } from '../../src/mail/sender.mjs';
@@ -47,4 +48,35 @@ it('uses HTTPS and a stable idempotency key when configured for Resend', async (
 it('rejects missing provider settings instead of pretending delivery succeeded', async () => {
   await assert.rejects(createMailSender({})(job), /MAIL_FROM/);
   await assert.rejects(createMailSender({ mailFrom: 'events@example.com' })(job), /SMTP_URL/);
+});
+
+it('bounds waiting for an SMTP server that accepts TCP but never sends its greeting', async () => {
+  const sockets = new Set();
+  const server = net.createServer((socket) => {
+    sockets.add(socket);
+    socket.on('close', () => sockets.delete(socket));
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const send = createMailSender({
+    smtpUrl: `smtp://127.0.0.1:${server.address().port}`,
+    mailFrom: 'events@example.com', smtpTimeoutMs: 100
+  });
+  const result = send(job).then(() => ({ status: 'sent' }), (error) => ({
+    status: 'failed', code: error.code
+  }));
+  let watchdog;
+  try {
+    const outcome = await Promise.race([
+      result,
+      new Promise((resolve) => {
+        watchdog = setTimeout(() => resolve({ status: 'hung' }), 1000);
+      })
+    ]);
+    assert.deepEqual(outcome, { status: 'failed', code: 'ETIMEDOUT' });
+  } finally {
+    clearTimeout(watchdog);
+    for (const socket of sockets) socket.destroy();
+    await new Promise((resolve) => server.close(resolve));
+    await result;
+  }
 });
