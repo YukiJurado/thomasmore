@@ -20,7 +20,8 @@
 
 - [Sequelize managed transactions](https://sequelize.org/docs/v6/other-topics/transactions/): commit registration and outbox records together, and roll back on failure.
 - [Nodemailer SMTP transport](https://nodemailer.com/smtp): message sending and bounded network timeouts.
-- [Resend send-email API](https://resend.com/docs/api-reference/emails/send-email): HTTPS sending and idempotency keys.
+- [Resend send-email API](https://resend.com/docs/api-reference/emails/send-email): optional HTTPS sending and idempotency keys.
+- [Brevo SMTP setup](https://help.brevo.com/hc/en-us/articles/7924908994450-Send-transactional-emails-using-Brevo-SMTP): live SMTP connection and supported ports.
 - [Transactional outbox pattern](https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/transactional-outbox.html): save business data and notification intent atomically.
 - [Render free-service limitations](https://render.com/docs/free): ephemeral files, sleeping services and blocked SMTP ports.
 
@@ -40,7 +41,7 @@
 
 The new tests cover an unavailable mail provider, actual local SMTP messages, outbox rollback, a real process restart, concurrent registration attempts, cache invalidation, expiry, memory bounds and delayed reads. They do not require live mail credentials.
 
-Live frontend/API checks are recorded in [verification.md](verification.md). The live confirmation test was reported **Delivered** in Resend. The test sender is restricted to the configured account owner; arbitrary recipients require a verified domain.
+Live frontend/API checks are recorded in [verification.md](verification.md). The live deployment now uses Brevo SMTP. A confirmation to a separately authorized recipient was reported **Delivered** in Brevo after the queued job and registration survived the hosting redeploy. The earlier Resend owner-only sender is no longer the active provider.
 
 ## Hosting boundaries
 

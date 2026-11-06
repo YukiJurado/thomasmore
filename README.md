@@ -69,7 +69,7 @@ Copy `api/.env.example` to `api/.env` locally, or configure variables directly i
 
 Set `MAIL_PROVIDER=smtp` or `MAIL_PROVIDER=resend` to select explicitly when both credentials are present.
 
-A verified sender/domain and permitted recipient are required by your provider. Resend's `onboarding@resend.dev` test sender is restricted to the account owner's email. Tests use a local SMTP receiver and require no provider account or credentials.
+The live deployment uses Brevo SMTP on port 2525 with `MAIL_PROVIDER=smtp`. Brevo reported a live confirmation as Delivered for an authorized recipient different from the provider signup address. Provider sender verification is still required. Resend remains an optional adapter; its `onboarding@resend.dev` test sender restricts recipients. Tests use a local SMTP receiver and require no provider credentials.
 
 An outbox job has a stable UUID. Resend receives it as an idempotency key; SMTP receives a stable Message-ID. Delivery is **at least once**, not a promise of exactly-once inbox receipt: a crash after provider acceptance but before marking the job sent can cause a retry. Resend's idempotency window is limited; SMTP Message-ID alone does not guarantee deduplication.
 

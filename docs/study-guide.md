@@ -106,7 +106,7 @@ Retry delay doubles after each failure and is capped at one hour. Failed jobs re
 
 A stable UUID prevents different jobs from sharing an idempotency key after a database reset. Resend's key can suppress duplicate requests within its provider window. SMTP receives a stable Message-ID, but this is not a guarantee that a recipient will never receive duplicates. A crash after provider acceptance and before `sentAt` is saved is an unavoidable ambiguity without stronger provider guarantees.
 
-Provider acceptance is not proof of inbox delivery. Real delivery can still bounce, be filtered, or require sender/domain verification. Resend's default test sender is restricted to the account owner's recipient address.
+Provider acceptance is not proof of inbox delivery. Real delivery can still bounce, be filtered, or require sender verification. The live deployment uses Brevo SMTP on port 2525, explicitly selected with `MAIL_PROVIDER=smtp`, even if an old Resend key remains saved. Resend’s optional default test sender restricts recipients; switching the active adapter removes that test-only path. Credentials stay in Render’s environment and never enter Git.
 
 ## 7. Caching and invalidation
 
