@@ -5,7 +5,6 @@ Students browse campus events and register for them. Based on the [course starte
 - **Repository:** https://github.com/YukiJurado/thomasmore
 - **Online app:** https://thomasmore-api.onrender.com/
 - **Health:** https://thomasmore-api.onrender.com/api/health
-- **Study guide:** [docs/study-guide.md](docs/study-guide.md)
 - **Submission and sources:** [docs/submission.md](docs/submission.md)
 
 ## Run locally
