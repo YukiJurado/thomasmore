@@ -3,6 +3,7 @@ import { enqueueEmail } from '../repositories/emailRepository.mjs';
 import { withDatabase, withTransaction } from '../repositories/databaseRepository.mjs';
 import { requireEvent } from './eventService.mjs';
 import { AppError } from '../errors/AppError.mjs';
+import { changes } from '../events/changes.mjs';
 
 export function listRegistrations(eventId) {
   return withDatabase(async () => {
@@ -30,5 +31,5 @@ export function register(eventId, data) {
       text: `Hi ${registration.name}, you are registered for ${event.title} at ${event.location}.`
     }, options);
     return registration;
-  });
+  }, () => changes.publish('registration.created', eventId));
 }

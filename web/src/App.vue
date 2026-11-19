@@ -1,5 +1,6 @@
 <script setup>
 import { RouterLink, RouterView } from 'vue-router';
+import NotificationToasts from './components/NotificationToasts.vue';
 </script>
 
 <template>
@@ -14,4 +15,5 @@ import { RouterLink, RouterView } from 'vue-router';
   <main class="page">
     <RouterView />
   </main>
+  <NotificationToasts />
 </template>

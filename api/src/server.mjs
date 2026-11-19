@@ -19,6 +19,7 @@ const server = app.listen(env.port, '0.0.0.0', () => {
 });
 
 async function shutdown() {
+  await app.locals.closeConnections();
   server.close(async () => {
     await mailWorker.stop();
     await sequelize.close();

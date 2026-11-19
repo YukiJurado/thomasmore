@@ -1,4 +1,5 @@
 import { Event, sequelize } from '../db/index.mjs';
+import { Op } from 'sequelize';
 
 // PostgreSQL row locks protect the last seat if another process also writes this event.
 function eventReadOptions(options) {
@@ -10,6 +11,14 @@ function eventReadOptions(options) {
 
 export async function findAllEvents() {
   const events = await Event.findAll({ order: [['startsAt', 'ASC']] });
+  return events.map((event) => event.toJSON());
+}
+
+export async function findEventsInRange({ from, before }) {
+  const startsAt = {};
+  if (from) startsAt[Op.gte] = from;
+  if (before) startsAt[Op.lt] = before;
+  const events = await Event.findAll({ where: { startsAt }, order: [['startsAt', 'ASC']] });
   return events.map((event) => event.toJSON());
 }
 

@@ -2,9 +2,18 @@ import { withDatabase, withTransaction } from '../repositories/databaseRepositor
 import * as events from '../repositories/eventRepository.mjs';
 import { countRegistrationsForEvent } from '../repositories/registrationRepository.mjs';
 import { AppError } from '../errors/AppError.mjs';
+import { changes } from '../events/changes.mjs';
 
 export function listEvents() {
   return withDatabase(() => events.findAllEvents());
+}
+
+export function listUpcomingEvents(now = new Date()) {
+  return withDatabase(() => events.findEventsInRange({ from: now }));
+}
+
+export function listPastEvents(now = new Date()) {
+  return withDatabase(() => events.findEventsInRange({ before: now }));
 }
 
 export async function requireEvent(id, options = {}) {
@@ -22,16 +31,23 @@ export function getEventById(id) {
 }
 
 export function createEvent(data) {
-  return withTransaction((transaction) => events.createEvent(data, { transaction }));
+  return withTransaction(
+    (transaction) => events.createEvent(data, { transaction }),
+    (event) => changes.publish('event.created', event.id)
+  );
 }
 
-export async function updateEvent(id, data) {
-  const event = await withTransaction((transaction) => events.updateEvent(id, data, { transaction }));
-  if (!event) throw new AppError(404, 'NOT_FOUND', `Event with id ${id} not found`);
-  return event;
+export function updateEvent(id, data) {
+  return withTransaction(async (transaction) => {
+    const event = await events.updateEvent(id, data, { transaction });
+    if (!event) throw new AppError(404, 'NOT_FOUND', `Event with id ${id} not found`);
+    return event;
+  }, (event) => changes.publish('event.updated', event.id));
 }
 
-export async function deleteEvent(id) {
-  const deleted = await withTransaction((transaction) => events.deleteEvent(id, { transaction }));
-  if (!deleted) throw new AppError(404, 'NOT_FOUND', `Event with id ${id} not found`);
+export function deleteEvent(id) {
+  return withTransaction(async (transaction) => {
+    const deleted = await events.deleteEvent(id, { transaction });
+    if (!deleted) throw new AppError(404, 'NOT_FOUND', `Event with id ${id} not found`);
+  }, () => changes.publish('event.deleted', id));
 }

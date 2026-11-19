@@ -14,12 +14,18 @@ function positiveInteger(name, fallback) {
   return value;
 }
 
+function commaSeparated(name, fallback) {
+  return (process.env[name] || fallback.join(',')).split(',').map((value) => value.trim()).filter(Boolean);
+}
+
 export const env = {
   nodeEnv: process.env.NODE_ENV,
   logLevel: process.env.LOG_LEVEL || 'info',
   dbStorage: process.env.DB_STORAGE || './data/events.sqlite',
   databaseUrl: process.env.DATABASE_URL,
   requireDurableStorage: process.env.REQUIRE_DURABLE_STORAGE === 'true',
+  mcpAllowedHosts: commaSeparated('MCP_ALLOWED_HOSTS', ['localhost', '127.0.0.1', '::1', 'thomasmore-api.onrender.com']),
+  mcpAllowedOrigins: commaSeparated('MCP_ALLOWED_ORIGINS', ['localhost', '127.0.0.1', '::1', 'thomasmore-api.onrender.com']),
   port: positiveInteger('PORT', 3000),
   smtpUrl: process.env.SMTP_URL,
   mailProvider: process.env.MAIL_PROVIDER,

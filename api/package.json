@@ -5,6 +5,7 @@
   "description": "Campus Events REST API (Express + Sequelize/SQLite)",
   "type": "module",
   "scripts": {
+    "mcp:check": "node scripts/checkMcp.mjs",
     "start": "node src/server.mjs",
     "dev": "node --watch src/server.mjs",
     "seed": "node src/seed.mjs",
@@ -12,6 +13,8 @@
     "test:coverage": "node --env-file=.env.test --test --experimental-test-coverage \"tests/**/*.test.mjs\""
   },
   "dependencies": {
+    "@modelcontextprotocol/node": "^2.1.2",
+    "@modelcontextprotocol/server": "^2.4.0",
     "amqplib": "^2.2.0",
     "express": "^5.2.1",
     "nodemailer": "^10.0.14",
@@ -23,6 +26,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@modelcontextprotocol/client": "^2.4.0",
     "supertest": "^7.3.1"
   }
 }

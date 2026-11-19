@@ -13,6 +13,11 @@ export function withDatabase(work) {
   return result;
 }
 
-export function withTransaction(work) {
-  return withDatabase(() => sequelize.transaction(work));
+export function withTransaction(work, afterCommit = () => {}) {
+  return withDatabase(async () => {
+    const result = await sequelize.transaction(work);
+    // Invalidate and notify after commit, before the next queued read can begin.
+    afterCommit(result);
+    return result;
+  });
 }
