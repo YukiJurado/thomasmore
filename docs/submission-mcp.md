@@ -23,6 +23,9 @@ https://thomasmore-api.onrender.com/mcp
 - Official MCP client tests over HTTP, including modern and legacy protocol negotiation.
 - Two simultaneous SSE connection tests, rollback/privacy checks and a REST-versus-MCP last-seat race.
 - Browser verification using two open pages: event creation and MCP registration each appeared once in both.
+- Hosted verification (19 November 2026): the official MCP client listed all three tools, returned upcoming/past events and completed a registration.
+- Two hosted browser pages displayed anonymous creation and registration toasts; the registration confirmation email was received.
+- Hosted cache checks preserved unrelated entries after an edit. Temporary verification events were removed and original events and registration counts were preserved.
 
 Connection instructions and demo steps: [MCP and notification API](mcp-notifications.md).
 Free Render may take longer on the first request after sleeping. Notifications are
